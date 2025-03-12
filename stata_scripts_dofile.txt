@@ -1,0 +1,175 @@
+xtset aid age
+gen lnmeanb = ln(ameanb) 
+gen lnmeanb2 = lnmeanb *lnmeanb
+gen lnmeand = ln(lnmeand) 
+gen lnmeand2 = lnmeand * lnmeanb
+
+gen lnminb = ln(aminb)
+gen lnminb2 = lnminb*lnminb
+gen lnmind = ln(lnmind)
+gen lnmind2 = lnmind*lnmind
+
+gen lnmaxb = ln(amaxb)
+gen lnmaxb2 = lnmaxb*lnmaxb
+gen lnmaxd = ln(lnmaxd)
+gen lnmaxd2 = lnmaxd*lnmaxd
+
+* correaltion
+pwcorr d lnmeanb lnmeand age authornum papercount 
+ 
+*model1 
+xtreg d age authornum papercount i.pubyear,fe vce(robust)
+est store model1
+*model2 
+xtreg d lnmeanb lnmeanb2 age authornum papercount i.pubyear,fe vce(robust)
+utest lnmeanb lnmeanb2
+est store model2 
+*model3 
+xtreg d lnmeand lnmeand2 age authornum papercount i.pubyear,fe vce(robust)
+utest lnmeand lnmeand2
+est store model3
+*model4 
+xtreg d lnmeanb lnmeanb2 age c.lnmeanb#c.age c.lnmeanb2#c.age authornum papercount i.pubyear,fe vce(robust)
+utest lnmeanb lnmeanb2
+est store model4
+*model5 
+xtreg d lnmeand lnmeand2 age c.lnmeand#c.age c.lnmeand2#c.age authornum papercount i.pubyear,fe vce(robust)
+utest lnmeand lnmeand2
+est store model5 
+
+*robustness check 
+*model6 
+xtreg d lnminb lnminb2 age c.lnminb#c.age c.lnminb2#c.age authornum papercount i.pubyear,fe vce(robust)
+utest lnminb lnminb2
+est store model6
+*model7
+xtreg d lnmaxd lnmaxd2 age c.lnmaxd#c.age c.lnmaxd2#c.age authornum papercount i.pubyear,fe vce(robust)
+utest lnmeand lnmeand2
+est store model7
+
+*model6 
+xtreg d lnmaxb lnmaxb2 age c.lnmaxb#c.age c.lnmaxb2#c.age authornum papercount i.pubyear,fe vce(robust)
+lnminb lnminb2
+est store model8
+*model7
+xtreg d lnmind lnmind2 age c.lnmind#c.age c.lnmind2#c.age authornum papercount i.pubyear,fe vce(robust)
+utest lnmeand lnmeand2
+est store model9
+
+
+twoway (scatter ameanb age if group == 1) (scatter ameanb age if group == 2) (scatter ameanb age if group ==3) (qfit ameand age if group ==1) ///
+(qfit ameanb age if group ==2) ///
+(qfit ameanb age if group ==3), xtitle("Career Age") ytitle("{it:Breadth} Scores")
+
+
+
+twoway (scatter ameand age if group == 1) (scatter ameand age if group == 2) (scatter ameand age if group ==3) (qfit ameand age if group ==1) ///
+(qfit ameand age if group ==2) ///
+(qfit ameand age if group ==3), xtitle("Career Age") ytitle("{it:Depth} Scores")
+
+
+
+twoway (scatter ameand age if group == 1) (qfit ameand age if group ==1) (scatter ameanb age if group == 2) (qfit ameand age if group ==2) (scatter ameanb age if group ==3) (qfit ameand age if group ==3), xtitle("Career Age") ytitle("{it:Breadth} Scores")
+
+(scatter ameanb age if group == 2) (scatter ameanb age if group ==3) (qfit ameand age if group ==1) ///
+(qfit ameand age if group ==2) ///
+(qfit ameand age if group ==3), xtitle("Career Age") ytitle("{it:Breadth} Scores")
+
+pwcorr meand ameanb aver_depth authornum authororder papercount age, sig
+
+reg meand aver_depth ameanb age authornum authororder papercount, r 
+vif 
+
+twoway (scatter ameanb age if group == 1) (scatter ameanb age if group == 2) (scatter ameanb age if group ==3) (qfit ameand age if group ==1) ///
+(qfit ameanb age if group ==2) ///
+(qfit ameanb age if group ==3), xtitle("Career Age") ytitle("{it:Breadth} Scores") ///
+legend(off)
+
+twoway (scatter ameanb age if group == 1) ///
+       (scatter ameanb age if group == 2) ///
+       (scatter ameanb age if group == 3) ///
+       (qfit ameand age if group == 1) ///
+       (qfit ameand age if group == 2) ///
+       (qfit ameand age if group == 3), ///
+       xtitle("Career Age") ytitle("{it:Breadth} Scores")
+
+
+twoway (scatter ameand age if group == 1) ///
+       (scatter ameand age if group == 2) ///
+       (scatter ameand age if group == 3) ///
+       (qfit ameand age if group == 1) ///
+       (qfit ameand age if group == 2) ///
+       (qfit ameand age if group == 3), ///
+       xtitle("Career Age") ytitle("{it:Depth} Scores")
+
+	   
+twoway (scatter aver_depth age if group == 1) ///
+       (scatter aver_depth age if group == 2) ///
+       (scatter aver_depth age if group == 3) ///
+       (qfit aver_depth age if group == 1) ///
+       (qfit aver_depth age if group == 2) ///
+       (qfit aver_depth age if group == 3), ///
+       xtitle("Career Age") ytitle("{it:Depth} Scores")	   
+	   
+****	   
+xtset aid age 
+gen kb_age = d.ameanb
+gen kd_age = d.ameand
+
+
+bys group age: egen incre_kb = mean(kb_age)
+bys group age: egen incre_kd = mean(kd_age)
+
+
+
+twoway (line incre_kb age if group ==1) (line incre_kb age if group ==2) (line incre_kb age if group ==3), ///
+xlabel(0(10)40) ///
+ylabel(0(50)200) ///
+ytitle("Annual average increase in {it:breadth} scores ") ///
+legend(off)
+
+
+twoway (line incre_kd age if group ==1) (line incre_kd age if group ==2) (line incre_kd age if group ==3), ///
+xlabel(0(10)40) ///
+ylabel(0(100)400) ///
+ytitle("Annual average increase in {it:depth} scores ")
+
+
+****robustness check****
+gen ln_aminb = ln(aminb)
+gen ln_aminb2 = ln_aminb * ln_aminb
+
+gen aver_maxdepth = amaxd / apubcount
+gen ln_aver_maxdepth = ln(aver_maxdepth)
+gen ln_aver_maxdepth2 = ln_aver_maxdepth * ln_aver_maxdepth
+
+xtreg meand ln_aminb ln_aver_maxdepth ln_aminb2 ln_aver_maxdepth2 age authornum authororder papercount i.pubyear, fe vce(robust)
+
+
+xtreg meand ln_aminb ln_aver_maxdepth ln_aminb2 ln_aver_maxdepth2 c.ln_aminb#c.age c.ln_aver_maxdepth#c.age c.ln_aminb2#c.age c.ln_aver_maxdepth2#c.age age authornum authororder papercount i.pubyear, fe vce(robust)
+
+
+utest ln_aminb ln_aminb2
+utest ln_aver_maxdepth ln_aver_maxdepth2
+
+eststo model4
+esttab model4, beta
+
+gen ln_amaxb = ln(amaxb)
+gen ln_amaxb2 = ln_amaxb * ln_amaxb
+
+gen aver_mindepth = amind / apubcount
+gen ln_aver_mindepth = ln(aver_mindepth)
+gen ln_aver_mindepth2 = ln_aver_mindepth * ln_aver_mindepth
+
+xtreg meand ln_amaxb ln_aver_mindepth ln_amaxb2 ln_aver_mindepth2 age authornum authororder papercount i.pubyear, fe vce(robust)
+
+utest ln_amaxb ln_amaxb2
+utest ln_aver_mindepth ln_aver_mindepth2
+
+
+
+xtreg meand ln_amaxb ln_aver_mindepth ln_amaxb2 ln_aver_mindepth2 c.ln_amaxb#c.age c.ln_aver_mindepth#c.age c.ln_amaxb2#c.age c.ln_aver_mindepth2#c.age age authornum authororder papercount i.pubyear, fe vce(robust)
+
+utest ln_amaxb ln_amaxb2
+utest ln_aver_mindepth ln_aver_mindepth2
